@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>National Power Monitor — Bangladesh</title>
+<style>
+  :root{
+    --bg:#0b0c0f;
+    --card:#15171c;
+    --card-2:#1c1f26;
+    --border:#262a33;
+    --text:#e9edf3;
+    --muted:#9aa3b2;
+    --accent:#3ddc84;
+    --accent-2:#ff6b6b;
+    --warn:#f5b942;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Bengali",Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px;}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+  h1{font-size:22px;margin:0 0 2px;}
+  .sub{color:var(--muted);font-size:13px;}
+  .lang-toggle{display:flex;gap:6px;}
+  .lang-toggle button{
+    background:var(--card-2);border:1px solid var(--border);color:var(--muted);
+    padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;
+  }
+  .lang-toggle button.active{color:var(--text);border-color:var(--accent);background:#14261d;}
+  .bangla-date{
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  }
+  .bangla-date .bn{font-size:18px;font-weight:600;}
+  .bangla-date .gr{color:var(--muted);font-size:13px;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px;margin-bottom:16px;
+  }
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--text);}
+  .card .hint{color:var(--muted);font-size:12.5px;margin-top:-6px;margin-bottom:14px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px;}
+  label{font-size:12px;color:var(--muted);}
+  input,select,textarea{
+    background:var(--card-2);border:1px solid var(--border);color:var(--text);
+    padding:9px 10px;border-radius:8px;font-size:14px;font-family:inherit;
+  }
+  textarea{resize:vertical;min-height:38px;}
+  button.primary{
+    background:var(--accent);color:#06130d;border:none;font-weight:600;
+    padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;
+  }
+  button.primary:disabled{opacity:0.5;cursor:default;}
+  button.secondary{
+    background:var(--card-2);color:var(--text);border:1px solid var(--border);
+    padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;
+  }
+  .notice{
+    display:flex;gap:8px;align-items:flex-start;background:#1a2116;border:1px solid #33421f;
+    color:#c8e6a0;border-radius:8px;padding:9px 11px;font-size:12.5px;margin-top:10px;
+  }
+  .notice .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;}
+  .result-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .result-line:last-child{border-bottom:none;}
+  .result-line .div-name{font-weight:500;}
+  .result-line .meta{color:var(--muted);font-size:12.5px;}
+  .bar-row{margin-bottom:10px;}
+  .bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+  .bar-label .count{color:var(--muted);font-size:11.5px;}
+  .bar-track{background:var(--card-2);border-radius:6px;height:10px;overflow:hidden;}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#2bb673);border-radius:6px;}
+  .empty{color:var(--muted);font-size:13px;padding:10px 0;}
+  .status{font-size:12.5px;margin-top:8px;min-height:16px;}
+  .status.ok{color:var(--accent);}
+  .status.err{color:var(--accent-2);}
+  footer{color:var(--muted);font-size:12px;margin-top:24px;text-align:center;}
+  [data-bn]{display:none;}
+  html[data-lang="bn"] [data-en]{display:none;}
+  html[data-lang="bn"] [data-bn]{display:inline;}
+  html[data-lang="bn"] .field-block[data-bn]{display:flex;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span data-en>National Power Monitor</span><span data-bn>জাতীয় বিদ্যুৎ মনিটর</span></h1>
+      <div class="sub"><span data-en>Bangladesh — community-reported power supply data</span><span data-bn>বাংলাদেশ — জনগণের দেওয়া বিদ্যুৎ সরবরাহ তথ্য</span></div>
+    </div>
+    <div class="lang-toggle">
+      <button id="btn-en" class="active">EN</button>
+      <button id="btn-bn">বাং</button>
+    </div>
+  </header>
+
+  <div class="bangla-date">
+    <div>
+      <div class="bn" id="bangla-date-text">—</div>
+      <div class="gr" id="gregorian-date-text">—</div>
+    </div>
+    <div class="sub" style="text-align:right;">
+      <span data-en>Bangla calendar month is calculated automatically</span>
+      <span data-bn>বাংলা মাস স্বয়ংক্রিয়ভাবে হিসাব করা হয়</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span data-en>Check power supply for a date</span><span data-bn>একটি নির্দিষ্ট তারিখের বিদ্যুৎ সরবরাহ দেখুন</span></h2>
+    <div class="hint">
+      <span data-en>Pick any past date to see what the community reported for each division that day.</span>
+      <span data-bn>যেকোনো পুরনো তারিখ বেছে নিন — সেদিন প্রতিটি বিভাগে মানুষ কী রিপোর্ট করেছিল তা দেখুন।</span>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label data-en>Date</label><label data-bn>তারিখ</label>
+        <input type="date" id="lookup-date" />
+      </div>
+      <button class="primary" id="lookup-btn">
+        <span data-en>Check</span><span data-bn>দেখুন</span>
+      </button>
+      <button class="secondary" id="lookup-clear">
+        <span data-en>Show all-time</span><span data-bn>সব সময়ের তথ্য</span>
+      </button>
+    </div>
+    <div id="lookup-bangla-line" class="hint" style="margin-top:10px;display:none;"></div>
+    <div id="lookup-results" style="margin-top:6px;"></div>
+  </div>
+
+  <div class="card">
+    <h2><span data-en>Report power supply in your area</span><span data-bn>আপনার এলাকার বিদ্যুৎ সরবরাহ রিপোর্ট করুন</span></h2>
+    <div class="row">
+      <div class="field">
+        <label data-en>Division</label><label data-bn>বিভাগ</label>
+        <select id="f-division">
+          <option value="Dhaka">Dhaka / ঢাকা</option>
+          <option value="Chattogram">Chattogram / চট্টগ্রাম</option>
+          <option value="Rajshahi">Rajshahi / রাজশাহী</option>
+          <option value="Khulna">Khulna / খুলনা</option>
+          <option value="Barishal">Barishal / বরিশাল</option>
+          <option value="Sylhet">Sylhet / সিলেট</option>
+          <option value="Rangpur">Rangpur / রংপুর</option>
+          <option value="Mymensingh">Mymensingh / ময়মনসিংহ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label data-en>Date</label><label data-bn>তারিখ</label>
+        <input type="date" id="f-date" />
+      </div>
+      <div class="field">
+        <label data-en>Hours of supply (out of 24)</label><label data-bn>সরবরাহ (২৪ ঘন্টার মধ্যে)</label>
+        <input type="number" id="f-hours" min="0" max="24" step="0.5" placeholder="e.g. 18" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <div class="field" style="flex:3;">
+        <label data-en>Note (optional)</label><label data-bn>মন্তব্য (ঐচ্ছিক)</label>
+        <textarea id="f-note" maxlength="280" placeholder="Any detail — area, time of outage, etc."></textarea>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <button class="primary" id="submit-btn">
+        <span data-en>Submit report</span><span data-bn>জমা দিন</span>
+      </button>
+    </div>
+    <div class="notice">
+      <div class="dot"></div>
+      <div>
+        <span data-en><strong>Public data:</strong> this report is stored on a shared server and is visible to every visitor of this site — not just your browser.</span>
+        <span data-bn><strong>প্রকাশ্য তথ্য:</strong> এই রিপোর্টটি একটি শেয়ার্ড সার্ভারে সংরক্ষিত হয় এবং এই সাইটের সব দর্শক তা দেখতে পাবেন — শুধু আপনার ব্রাউজারে নয়।</span>
+      </div>
+    </div>
+    <div class="status" id="submit-status"></div>
+  </div>
+
+  <div class="card">
+    <h2><span data-en>Community-reported supply by division (all-time)</span><span data-bn>বিভাগ অনুযায়ী কমিউনিটি-রিপোর্টেড সরবরাহ (সর্বমোট)</span></h2>
+    <div class="hint">
+      <span data-en>Self-reported and unverified. Shared across all visitors and updates as new reports come in.</span>
+      <span data-bn>স্ব-রিপোর্টেড ও যাচাই করা হয়নি। সব দর্শকের মধ্যে শেয়ার করা এবং নতুন রিপোর্ট আসার সাথে সাথে আপডেট হয়।</span>
+    </div>
+    <div id="chart-all"></div>
+  </div>
+
+  <footer>
+    <span data-en>Data is entirely community-submitted, self-reported, and unverified. This is not an official government source.</span>
+    <span data-bn>তথ্য সম্পূর্ণরূপে কমিউনিটি-প্রদত্ত, স্ব-রিপোর্টেড এবং যাচাই করা হয়নি। এটি কোনো সরকারি অফিসিয়াল উৎস নয়।</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ---------- language ----------
+  const btnEn = document.getElementById('btn-en');
+  const btnBn = document.getElementById('btn-bn');
+  function setLang(lang){
+    document.documentElement.setAttribute('data-lang', lang);
+    btnEn.classList.toggle('active', lang === 'en');
+    btnBn.classList.toggle('active', lang === 'bn');
+    localStorage.setItem('lang', lang);
+    renderBanglaDate();
+  }
+  btnEn.addEventListener('click', () => setLang('en'));
+  btnBn.addEventListener('click', () => setLang('bn'));
+
+  // ---------- Bangla calendar (reformed, Pohela Boishakh = 14 April) ----------
+  const BN_MONTHS = ["বৈশাখ","জ্যৈষ্ঠ","আষাঢ়","শ্রাবণ","ভাদ্র","আশ্বিন","কার্তিক","অগ্রহায়ণ","পৌষ","মাঘ","ফাল্গুন","চৈত্র"];
+  const EN_MONTHS = ["Boishakh","Joishtho","Ashar","Shrabon","Bhadro","Ashwin","Kartik","Ogrohayon","Poush","Magh","Falgun","Chaitro"];
+  const BN_DIGITS = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+  function toBnNum(n){
+    return String(n).split('').map(c => (c>='0'&&c<='9') ? BN_DIGITS[+c] : c).join('');
+  }
+  function isGLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function toBanglaDate(gDate){
+    const gYear = gDate.getFullYear();
+    const newYearThisYear = new Date(gYear, 3, 14); // April 14
+    let bYear, epoch;
+    if (gDate >= newYearThisYear) {
+      bYear = gYear - 593;
+      epoch = newYearThisYear;
+    } else {
+      bYear = gYear - 594;
+      epoch = new Date(gYear - 1, 3, 14);
+    }
+    const dayOfYear = Math.floor((gDate - epoch) / 86400000);
+    const chaitroGYear = epoch.getFullYear() + 1;
+    const lengths = [31,31,31,31,31,30,30,30,30,30,30, isGLeap(chaitroGYear) ? 31 : 30];
+    let remaining = dayOfYear, m = 0;
+    while (m < 11 && remaining >= lengths[m]) { remaining -= lengths[m]; m++; }
+    return { year: bYear, monthIndex: m, day: remaining + 1 };
+  }
+  function renderBanglaDate(){
+    const now = new Date();
+    const b = toBanglaDate(now);
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
+    const bnText = lang === 'bn'
+      ? `${toBnNum(b.day)} ${BN_MONTHS[b.monthIndex]}, ${toBnNum(b.year)}`
+      : `${b.day} ${EN_MONTHS[b.monthIndex]} ${b.year} (Bangla)`;
+    document.getElementById('bangla-date-text').textContent = bnText;
+    document.getElementById('gregorian-date-text').textContent =
+      now.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+
+  // ---------- divisions labels ----------
+  const DIV_LABEL = {
+    Dhaka:{en:"Dhaka",bn:"ঢাকা"}, Chattogram:{en:"Chattogram",bn:"চট্টগ্রাম"},
+    Rajshahi:{en:"Rajshahi",bn:"রাজশাহী"}, Khulna:{en:"Khulna",bn:"খুলনা"},
+    Barishal:{en:"Barishal",bn:"বরিশাল"}, Sylhet:{en:"Sylhet",bn:"সিলেট"},
+    Rangpur:{en:"Rangpur",bn:"রংপুর"}, Mymensingh:{en:"Mymensingh",bn:"ময়মনসিংহ"}
+  };
+  function divLabel(d){
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
+    return DIV_LABEL[d] ? DIV_LABEL[d][lang] : d;
+  }
+
+  // ---------- API ----------
+  async function fetchReports(date){
+    const url = date ? `/api/reports?date=${encodeURIComponent(date)}` : '/api/reports';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to load');
+    return res.json();
+  }
+  async function postReport(payload){
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to submit');
+    return data;
+  }
+
+  // ---------- chart rendering ----------
+  function renderChart(container, agg){
+    container.innerHTML = '';
+    if (!agg || agg.length === 0) {
+      const p = document.createElement('div');
+      p.className = 'empty';
+      const lang = document.documentElement.getAttribute('data-lang') || 'en';
+      p.textContent = lang === 'bn' ? 'এখনো কোনো রিপোর্ট নেই।' : 'No reports yet.';
+      container.appendChild(p);
+      return;
+    }
+    const max = Math.max(...agg.map(a => a.avg_hours), 1);
+    agg.sort((a,b) => b.avg_hours - a.avg_hours);
+    agg.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      const pct = Math.max(4, Math.round((a.avg_hours / max) * 100));
+      row.innerHTML = `
+        <div class="bar-label">
+          <span>${divLabel(a.division)}</span>
+          <span>${a.avg_hours.toFixed(1)}h <span class="count">(${a.count} report${a.count===1?'':'s'})</span></span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function renderLookupResults(container, rows, agg, date){
+    container.innerHTML = '';
+    if (!agg || agg.length === 0) {
+      const p = document.createElement('div');
+      p.className = 'empty';
+      const lang = document.documentElement.getAttribute('data-lang') || 'en';
+      p.textContent = lang === 'bn'
+        ? 'এই তারিখের জন্য এখনো কোনো রিপোর্ট নেই।'
+        : 'No reports for this date yet.';
+      container.appendChild(p);
+      return;
+    }
+    agg.sort((a,b) => b.avg_hours - a.avg_hours);
+    agg.forEach(a => {
+      const line = document.createElement('div');
+      line.className = 'result-line';
+      line.innerHTML = `
+        <span class="div-name">${divLabel(a.division)}</span>
+        <span>${a.avg_hours.toFixed(1)}h <span class="meta">(${a.count} report${a.count===1?'':'s'})</span></span>
+      `;
+      container.appendChild(line);
+    });
+  }
+
+  async function loadAllTimeChart(){
+    try {
+      const data = await fetchReports(null);
+      renderChart(document.getElementById('chart-all'), data.agg);
+    } catch (e) {
+      document.getElementById('chart-all').innerHTML = '<div class="empty">Could not load data.</div>';
+    }
+  }
+
+  async function doLookup(date){
+    const banglaLine = document.getElementById('lookup-bangla-line');
+    const resultsEl = document.getElementById('lookup-results');
+    if (date) {
+      const d = new Date(date + 'T00:00:00');
+      const b = toBanglaDate(d);
+      const lang = document.documentElement.getAttribute('data-lang') || 'en';
+      banglaLine.style.display = 'block';
+      banglaLine.textContent = lang === 'bn'
+        ? `বাংলা তারিখ: ${toBnNum(b.day)} ${BN_MONTHS[b.monthIndex]}, ${toBnNum(b.year)}`
+        : `Bangla date: ${b.day} ${EN_MONTHS[b.monthIndex]} ${b.year}`;
+    } else {
+      banglaLine.style.display = 'none';
+    }
+    resultsEl.innerHTML = '<div class="empty">Loading…</div>';
+    try {
+      const data = await fetchReports(date);
+      renderLookupResults(resultsEl, data.rows, data.agg, date);
+    } catch (e) {
+      resultsEl.innerHTML = '<div class="empty">Could not load data.</div>';
+    }
+  }
+
+  document.getElementById('lookup-btn').addEventListener('click', () => {
+    const date = document.getElementById('lookup-date').value;
+    if (!date) return;
+    doLookup(date);
+  });
+  document.getElementById('lookup-clear').addEventListener('click', () => {
+    document.getElementById('lookup-date').value = '';
+    document.getElementById('lookup-bangla-line').style.display = 'none';
+    doLookup(null);
+  });
+
+  // ---------- submit form ----------
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('f-date').max = today;
+  document.getElementById('f-date').value = today;
+  document.getElementById('lookup-date').max = today;
+
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('submit-btn');
+    const statusEl = document.getElementById('submit-status');
+    const division = document.getElementById('f-division').value;
+    const date = document.getElementById('f-date').value || today;
+    const hours = document.getElementById('f-hours').value;
+    const note = document.getElementById('f-note').value;
+
+    if (hours === '' || isNaN(Number(hours))) {
+      statusEl.className = 'status err';
+      statusEl.textContent = 'Please enter hours of supply.';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.className = 'status';
+    statusEl.textContent = 'Submitting…';
+    try {
+      await postReport({ division, report_date: date, hours: Number(hours), note });
+      statusEl.className = 'status ok';
+      const lang = document.documentElement.getAttribute('data-lang') || 'en';
+      statusEl.textContent = lang === 'bn' ? 'ধন্যবাদ! রিপোর্ট জমা হয়েছে।' : 'Thanks! Report submitted.';
+      document.getElementById('f-hours').value = '';
+      document.getElementById('f-note').value = '';
+      loadAllTimeChart();
+      const lookupDate = document.getElementById('lookup-date').value;
+      if (lookupDate === date) doLookup(date);
+    } catch (e) {
+      statusEl.className = 'status err';
+      statusEl.textContent = e.message || 'Something went wrong.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- init ----------
+  setLang(localStorage.getItem('lang') || 'en');
+  loadAllTimeChart();
+  setInterval(renderBanglaDate, 60000);
+})();
+</script>
+</body>
+</html>
