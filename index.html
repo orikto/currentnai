@@ -170,6 +170,7 @@
     <div>
       <h1><span data-en>National Power Monitor</span><span data-bn>জাতীয় বিদ্যুৎ মনিটর</span></h1>
       <div class="sub"><span data-en>Bangladesh — community-reported power supply data</span><span data-bn>বাংলাদেশ — জনগণের দেওয়া বিদ্যুৎ সরবরাহ তথ্য</span></div>
+      <div class="sub" id="visit-stat" style="margin-top:2px;"></div>
     </div>
     <div class="lang-toggle">
       <button id="btn-en" class="active">EN</button>
@@ -452,6 +453,7 @@
     populateDistricts('f-division','f-district');
     populateDistricts('b-division','b-district');
     populateSuppliers();
+    renderVisitStat();
   }
   btnEn.addEventListener('click', () => setLang('en'));
   btnBn.addEventListener('click', () => setLang('bn'));
@@ -979,10 +981,37 @@
     }
   });
 
+  // ---------- page view counter ----------
+  let lastVisitData = null;
+  function renderVisitStat(){
+    if (!lastVisitData) return;
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
+    const el = document.getElementById('visit-stat');
+    if (!el) return;
+    el.textContent = lang === 'bn'
+      ? `আজ ${toBnNum(lastVisitData.today)}টি ভিজিট · সর্বমোট ${toBnNum(lastVisitData.allTime)}টি (পেজ লোড, অনন্য দর্শক নয়)`
+      : `${lastVisitData.today} visits today · ${lastVisitData.allTime} all-time (page loads, not unique visitors)`;
+  }
+  async function logAndShowVisits(){
+    const todayKey = 'pv_logged_' + new Date().toISOString().slice(0,10);
+    try {
+      if (!sessionStorage.getItem(todayKey)) {
+        await fetch('/api/page-views', { method: 'POST' });
+        sessionStorage.setItem(todayKey, '1');
+      }
+    } catch (e) { /* ignore */ }
+    try {
+      const res = await fetch('/api/page-views');
+      lastVisitData = await res.json();
+      renderVisitStat();
+    } catch (e) { /* ignore */ }
+  }
+
   // ---------- init ----------
   setLang(localStorage.getItem('lang') || 'en');
   loadAllTime();
   loadBillAllTime();
+  logAndShowVisits();
   setInterval(renderBanglaDate, 60000);
 })();
 </script>
